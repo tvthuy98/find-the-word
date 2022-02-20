@@ -10,6 +10,8 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
     return handlePostState(req, res);
   } else if (req.method === 'GET') {
     return handleGetState(req, res);
+  } else if (req.method === 'PUT') {
+    return handleNewGame(req, res);
   }
 };
 
@@ -25,16 +27,8 @@ function handlePostState(req: NextApiRequest, res: NextApiResponseServerIO) {
   const nextQuestion = storage.nextQuestion();
   const currsentUser = storage.getPlayer(cookies.get('player_id'));
 
-  if (currsentUser.score >= 20) {
-    storage.newGame();
-    res?.socket?.server?.io?.emit(
-      "game:reset",
-      {
-        data: storage.gameData,
-        next: storage.currentQuestion,
-        scores: storage.scoreBoard,
-      }
-    );
+  if (currsentUser.score >= 15) {
+    return handleNewGame(req, res);
 
   } else {
     res?.socket?.server?.io?.emit(
@@ -53,4 +47,16 @@ function handlePostState(req: NextApiRequest, res: NextApiResponseServerIO) {
 
 function handleGetState(req: NextApiRequest, res: NextApiResponseServerIO) {
   res.status(200).json(storage.scoreBoard);
+}
+
+function handleNewGame(req: NextApiRequest, res: NextApiResponseServerIO) {
+  storage.newGame();
+  res?.socket?.server?.io?.emit(
+    "game:reset",
+    {
+      data: storage.gameData,
+      next: storage.currentQuestion,
+      scores: storage.scoreBoard,
+    }
+  );
 }

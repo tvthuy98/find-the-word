@@ -1,40 +1,6 @@
 
 import React  from "react";
 import "twin.macro";
-import { defineGrid, extendHex } from 'honeycomb-grid'
-
-const Grid = defineGrid(extendHex({
-  size: 40,
-}));
-const characters = 'あいうえおかきくけこさしすせそtたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑを';
-const board = Grid.rectangle({ width: 12, height: 12 });
-
-function randomNumber(min, max) {
-  return Math.floor(Math.random() * (max - min) + min);
-}
-
-const gameData = [];
-
-const getNewPos = (taken = []) => {
-  let pos = board[randomNumber(0, board.length - 1)];
-  if (taken.indexOf(pos) > -1) {
-    return getNewPos();
-  }
-
-  taken.push(pos);
-  return pos;
-}
-
-let taken = [];
-for (let i = 0; i < characters.length; i++) {
-  const pos = getNewPos(taken).toPoint();
-  gameData.push({
-    value: characters[i],
-    x: pos.x,
-    y: pos.y,
-    label: characters[i]
-  })
-}
 
 export interface IGameItem {
   value: string;
@@ -66,7 +32,7 @@ const GameBoard: React.FC<{
 
   return (
     <div tw="w-1/2">
-      <div tw="h-8 text-2xl mb-5 w-full bg-green-300 w-full text-center">
+      <div tw="h-8 text-3xl mb-5 w-full bg-green-300 w-full text-center">
         {props.question?.value}
       </div>
       <div tw="relative">

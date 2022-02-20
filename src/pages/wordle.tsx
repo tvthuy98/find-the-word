@@ -96,7 +96,7 @@ const Wordle: React.FC<{
 
   return (<><div tw="flex w-full">
     <div tw="flex w-1/2 max-w-xs flex-col h-screen">
-      <div tw="flex flex-col flex-1 bg-yellow-200">
+      <div tw="flex flex-col flex-1 bg-gray-200">
         <div tw="flex-1 p-4 font-mono">
           {
             scoreBoard.map((plrScore, i) => (

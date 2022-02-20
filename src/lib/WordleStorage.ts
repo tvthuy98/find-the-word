@@ -4,7 +4,10 @@ import { defineGrid, extendHex } from 'honeycomb-grid'
 const Grid = defineGrid(extendHex({
   size: 40,
 }));
-const puzzle = 'あいうえおかきくけこさしすせそtたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑを';
+const puzzle = 'あ,a|い,i|う,u|え,e|お,o|か,ka|き,ki|く,ku|け,ke|こ,ko|さ,sa|し,shi|す,su,|せ,se|そ,so|た,ta|ち,chi|つ,tsu|て,te|と,to|な,na|に,ni|ぬ,nu|ね,ne|の,no|は,ha|ひ,bi|ふ,fu|へ,he|ほ,ho|ま,ma|み,mi|む,mu|め,me|も,mo|や,ya|ゆ,yu|よ,yo|ら,ra|り,ri|る,ru|れ,re|ろ,ro|わ,wa|ゐ,wu|を,wo'.split('|').map(i => {
+  const [value, label] = i.split(',');
+  return { label, value };
+});
 let board = Grid.rectangle({ width: 12, height: 12 });
 
 function shuffle(array) {
@@ -113,10 +116,10 @@ class Storage {
     for (let i = 0; i < puzzle.length; i++) {
       const pos = board[i].toPoint();
       this.gameData.push({
-        value: puzzle[i],
+        value: puzzle[i].label,
         x: pos.x,
         y: pos.y,
-        label: puzzle[i]
+        label: puzzle[i].value
       });
     }
 

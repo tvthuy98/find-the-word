@@ -16,6 +16,7 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
 function handlePostState(req: NextApiRequest, res: NextApiResponseServerIO) {
   const cookies = new Cookies(req, res);
   const player_id = cookies.get('player_id');
+  console.log('[x] port', process.env.PORT);
   if (player_id && !storage.isPlayer(player_id)) {
     storage.addPlayer(player_id, cookies.get('player_name'));
   }

@@ -20,13 +20,32 @@ function handlePostState(req: NextApiRequest, res: NextApiResponseServerIO) {
     storage.addPlayer(player_id, cookies.get('player_name'));
   }
 
-  storage.plusOne(cookies.get('player_id'));
+  storage.answerCorrect(cookies.get('player_id'));
+  const current = storage.currentQuestion;
+  const nextQuestion = storage.nextQuestion();
+  const currsentUser = storage.getPlayer(cookies.get('player_id'));
 
-  // dispatch to channel "scored"
-  res?.socket?.server?.io?.emit(
-    "player:scored",
-    storage.getPlayer(cookies.get('player_id'))
-  );
+  if (currsentUser.score >= 20) {
+    storage.newGame();
+    res?.socket?.server?.io?.emit(
+      "game:reset",
+      {
+        data: storage.gameData,
+        next: storage.currentQuestion,
+        scores: storage.scoreBoard,
+      }
+    );
+
+  } else {
+    res?.socket?.server?.io?.emit(
+      "player:scored",
+      {
+        player: currsentUser,
+        next: nextQuestion,
+        current: current,
+      }
+    );
+  }
 
   // return message
   res.status(201).json({ ok: 201 });

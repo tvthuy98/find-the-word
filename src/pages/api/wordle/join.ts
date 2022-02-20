@@ -1,7 +1,6 @@
 import { NextApiRequest } from "next";
 import WordleStorage from "src/lib/WordleStorage";
 import { NextApiResponseServerIO } from "src/types/next";
-import Cookies from 'cookies';
 
 const storage = WordleStorage.getInstance();
 
@@ -14,6 +13,10 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
 function handleJoinTheGame(req: NextApiRequest, res: NextApiResponseServerIO) {
   const playerId = req.body.playerId;
   const playerName = req.body.name;
+  if (!storage.currentQuestion) {
+    storage.newGame();
+  }
+
   if (playerId && !storage.isPlayer(playerId)) {
     storage.addPlayer(playerId, playerName);
   }
@@ -24,5 +27,10 @@ function handleJoinTheGame(req: NextApiRequest, res: NextApiResponseServerIO) {
     storage.getPlayer(playerId)
   );
 
-  res.status(200).json(storage.scoreBoard);
+  res.status(200).json({
+    score: storage.scoreBoard,
+    data: storage.gameData,
+    answered: storage.answered,
+    current: storage.currentQuestion,
+  });
 }

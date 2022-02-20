@@ -1,5 +1,31 @@
-
 import { v4 as uuidv4 } from 'uuid';
+import { defineGrid, extendHex } from 'honeycomb-grid'
+
+const Grid = defineGrid(extendHex({
+  size: 40,
+}));
+const puzzle = 'あいうえおかきくけこさしすせそtたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわゐゑを';
+let board = Grid.rectangle({ width: 12, height: 12 });
+
+function shuffle(array) {
+  let currentIndex = array.length, randomIndex;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+}
+
+board = shuffle(board);
 
 export interface IScore {
   name: string;
@@ -16,8 +42,19 @@ export interface IPlayer {
   name: string;
 }
 
+export interface IGameItem {
+  value: string;
+  x: number;
+  y: number;
+  label: string;
+}
+
 class Storage {
   scoreBoard: IBoardScores = {};
+  gameData: IGameItem[]  = [];
+  answered: IGameItem[]  = [];
+  remaining: IGameItem[] = [];
+  currentQuestion: IGameItem;
   _instanceId: string;
 
   constructor() {
@@ -48,7 +85,7 @@ class Storage {
     this.scoreBoard[playerId].name = newName;
   }
 
-  plusOne(playerId: string): void {
+  answerCorrect(playerId: string): void {
     if (!this.scoreBoard[playerId]) {
       throw new Error(`player ${playerId} does not exits`);
     }
@@ -56,31 +93,55 @@ class Storage {
     this.scoreBoard[playerId].score += 1;
   }
 
+  nextQuestion() {
+    this.answered.push(this.currentQuestion);
+    this.currentQuestion = this.remaining.pop();
+    return this.currentQuestion;
+  }
+
   getPlayer(playerId: string) {
     return this.scoreBoard[playerId];
   }
 
   newGame() {
+    board = shuffle(board);
     const scores = Object.values(this.scoreBoard);
     for (let i = 0, len = scores.length; i < len; i++) {
       scores[i].score = 0;
     }
+
+    for (let i = 0; i < puzzle.length; i++) {
+      const pos = board[i].toPoint();
+      this.gameData.push({
+        value: puzzle[i],
+        x: pos.x,
+        y: pos.y,
+        label: puzzle[i]
+      });
+    }
+
+    this.answered = [];
+    this.remaining = shuffle([...this.gameData]);
+    this.currentQuestion = this.remaining.pop();
   }
 
   reset() {
     this.scoreBoard = {};
+    this.answered = [];
+    this.remaining = [];
+    this.currentQuestion = null;
   }
 }
 
 const storage = new Storage();
 
 class WordleStorage {
-    constructor() {
-        throw new Error('Use Singleton.getInstance()');
-    }
-    static getInstance() {
-      return storage;
-    }
+  constructor() {
+    throw new Error('Use Singleton.getInstance()');
+  }
+  static getInstance() {
+    return storage;
+  }
 }
 
 export default WordleStorage;

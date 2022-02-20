@@ -108,6 +108,9 @@ class Storage {
 
   newGame() {
     board = shuffle(board);
+    this.gameData = [];
+    this.answered = [];
+
     const scores = Object.values(this.scoreBoard);
     for (let i = 0, len = scores.length; i < len; i++) {
       scores[i].score = 0;
@@ -123,7 +126,6 @@ class Storage {
       });
     }
 
-    this.answered = [];
     this.remaining = shuffle([...this.gameData]);
     this.currentQuestion = this.remaining.pop();
   }

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import SocketIOClient from "socket.io-client";
 import tw from "twin.macro";
 import Cookies from 'cookies';
+import getLocalIp from "src/lib/getIpAddress";
 
 interface IPlayer {
   playerId: string;
@@ -21,14 +22,14 @@ interface IBoardScores {
 }
 
 // component
-const Wordle: React.FC<{ playerId: string }> = (props) => {
+const Wordle: React.FC<{ playerId: string, scoreBoard: IBoardScores }> = (props) => {
   const inputRef = useRef(null);
 
   // connected flag
   const [connected, setConnected] = useState<boolean>(false);
 
   // init chat and message
-  const [scores, setScores] = useState<IBoardScores>({});
+  const [scores, setScores] = useState<IBoardScores>(props.scoreBoard);
   const [msg, setMsg] = useState<string>("");
   const [scoreBoard, setScoreBoard] = useState<IScore[]>([]);
 
@@ -52,6 +53,13 @@ const Wordle: React.FC<{ playerId: string }> = (props) => {
       });
     });
 
+    socket.on("player:joined", (message: IScore) => {
+      setScores(scrs => {
+        scrs[message.playerId] = message;
+        return { ...scrs };
+      });
+    });
+
     // socket disconnet onUnmount if exists
     if (socket) return () => socket.disconnect();
   }, []);
@@ -60,7 +68,7 @@ const Wordle: React.FC<{ playerId: string }> = (props) => {
     let newScoreBoard: IScore[] = Object.values(scores);
     newScoreBoard = newScoreBoard.sort((cur, next) => next.score - cur.score);
     setScoreBoard(newScoreBoard);
-  }, [scores]);
+  }, [scores, props.scoreBoard]);
 
   const sendMessage = async () => {
     if (msg) {
@@ -147,9 +155,7 @@ const Wordle: React.FC<{ playerId: string }> = (props) => {
 
 export async function getServerSideProps(context: NextPageContext) {
   const cookies = new Cookies(context?.req, context?.res);
-  const scoreBoard = await fetch('http:0.0.0.0:3000/api/wordle/game-state').then(r => r.json());
   let playerId = cookies.get('player_id');
-  console.log('[x] score board', scoreBoard);
   if (!playerId) {
     return {
       redirect: {
@@ -158,6 +164,20 @@ export async function getServerSideProps(context: NextPageContext) {
       }
     }
   }
+
+  const myIp = getLocalIp();
+  console.log('[x] my ip', myIp);
+  const scoreBoard = await fetch(`http:${myIp}:3000/api/wordle/join`, {
+    method: 'POST',
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      playerId,
+      name: cookies.get('player_name')
+    }),
+  }).then(r => r.json());
+  console.log('[x] score board', scoreBoard);
 
   return {
     props: {

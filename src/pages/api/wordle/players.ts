@@ -22,7 +22,7 @@ function handleNewPlayerJoined(req: NextApiRequest, res: NextApiResponseServerIO
   }
 
   // dispatch to channel "scored"
-  res?.socket?.server?.io?.emit("player:joined", message);
+  res?.socket?.server?.io?.emit("player:joined", storage.getPlayer(message.playerId));
 
   cookies.set('player_id', message.playerId);
   cookies.set('player_name', message.name);

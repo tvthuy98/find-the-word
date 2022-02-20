@@ -167,6 +167,7 @@ export async function getServerSideProps(context: NextPageContext) {
 
   const myIp = getLocalIp();
   console.log('[x] my ip', myIp);
+  console.log('[x] port', process.env.PORT);
   const scoreBoard = await fetch(`http:${myIp}:3000/api/wordle/join`, {
     method: 'POST',
     headers: {

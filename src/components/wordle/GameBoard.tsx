@@ -32,7 +32,7 @@ const GameBoard: React.FC<{
   }
 
   return (
-    <div tw="w-1/2">
+    <div tw="w-full">
       <div tw="h-8 text-3xl mb-5 w-full bg-green-300 w-full text-center">
         {props.question?.value}
       </div>

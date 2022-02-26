@@ -4,14 +4,9 @@ import { defineGrid, extendHex } from 'honeycomb-grid'
 const Grid = defineGrid(extendHex({
   size: 40,
 }));
-const puzzle = 'あ,a|い,i|う,u|え,e|お,o|か,ka|き,ki|く,ku|け,ke|こ,ko|さ,sa|し,shi|す,su,|せ,se|そ,so|た,ta|ち,chi|つ,tsu|て,te|と,to|な,na|に,ni|ぬ,nu|ね,ne|の,no|は,ha|ひ,bi|ふ,fu|へ,he|ほ,ho|ま,ma|み,mi|む,mu|め,me|も,mo|や,ya|ゆ,yu|よ,yo|ら,ra|り,ri|る,ru|れ,re|ろ,ro|わ,wa|ゐ,wu|を,wo'.split('|').map(i => {
-  const [value, label] = i.split(',');
-  return { label, value };
-});
-let board = Grid.rectangle({ width: 5, height: 12 });
 
-function shuffle(array) {
-  let currentIndex = array.length, randomIndex;
+function shuffle(array: any[]) {
+  let currentIndex = array.length, randomIndex: number;
 
   // While there remain elements to shuffle...
   while (currentIndex != 0) {
@@ -27,8 +22,6 @@ function shuffle(array) {
 
   return array;
 }
-
-board = shuffle(board);
 
 export interface IPuzzle {
   label: string;
@@ -65,17 +58,20 @@ class Storage {
   currentQuestion: IGameItem;
   _instanceId: string;
   puzzle: IPuzzle[];
+  boardWidth: number = 12;
+  boardHeight: number = 12;
+  board: typeof Grid;
 
   constructor() {
     this._instanceId = uuidv4();
+    this.board = Grid.rectangle({ width: this.boardWidth, height: this.boardHeight });
   }
 
   setPuzzle(newPuzzle: string) {
     const puzzles = newPuzzle.replace(/(?:\\[rn]|[\r\n]+)+/g, "\n").split('\n').filter(Boolean);
     this.puzzle = puzzles.map(item => {
       const [value, label] = item.split('-->');
-      console.log({ value, label });
-      return { label: label, value: value } as IPuzzle;
+      return { label: label.trim(), value: value.trim() } as IPuzzle;
     })
   }
 
@@ -122,20 +118,25 @@ class Storage {
   }
 
   newGame() {
-    board = shuffle(board);
     if (!this.puzzle?.length) {
       this.setPuzzle('question --> answer');
     }
     this.gameData = [];
     this.answered = [];
+    this.puzzle = shuffle(this.puzzle);
 
     const scores = Object.values(this.scoreBoard);
     for (let i = 0, len = scores.length; i < len; i++) {
       scores[i].score = 0;
     }
 
-    for (let i = 0; i < this.puzzle.length; i++) {
-      const pos = board[i].toPoint();
+    const maxI = this.boardWidth * this.boardHeight;
+
+    for (let i = 0; i < maxI; i++) {
+      if (!this.puzzle[i]) {
+        break;
+      }
+      const pos = this.board[i].toPoint();
       this.gameData.push({
         value: this.puzzle[i].label,
         x: pos.x,

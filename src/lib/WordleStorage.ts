@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { defineGrid, extendHex } from 'honeycomb-grid'
+import { defineGrid, extendHex, GridFactory, Hex } from 'honeycomb-grid'
 
 const Grid = defineGrid(extendHex({
   size: 40,
@@ -60,7 +60,7 @@ class Storage {
   puzzle: IPuzzle[];
   boardWidth: number = 12;
   boardHeight: number = 12;
-  board: typeof Grid;
+  board: any;
 
   constructor() {
     this._instanceId = uuidv4();

@@ -8,7 +8,7 @@ const puzzle = 'あ,a|い,i|う,u|え,e|お,o|か,ka|き,ki|く,ku|け,ke|こ,ko
   const [value, label] = i.split(',');
   return { label, value };
 });
-let board = Grid.rectangle({ width: 12, height: 12 });
+let board = Grid.rectangle({ width: 5, height: 12 });
 
 function shuffle(array) {
   let currentIndex = array.length, randomIndex;
@@ -29,6 +29,11 @@ function shuffle(array) {
 }
 
 board = shuffle(board);
+
+export interface IPuzzle {
+  label: string;
+  value: string;
+}
 
 export interface IScore {
   name: string;
@@ -59,9 +64,19 @@ class Storage {
   remaining: IGameItem[] = [];
   currentQuestion: IGameItem;
   _instanceId: string;
+  puzzle: IPuzzle[];
 
   constructor() {
     this._instanceId = uuidv4();
+  }
+
+  setPuzzle(newPuzzle: string) {
+    const puzzles = newPuzzle.replace(/(?:\\[rn]|[\r\n]+)+/g, "\n").split('\n').filter(Boolean);
+    this.puzzle = puzzles.map(item => {
+      const [value, label] = item.split('-->');
+      console.log({ value, label });
+      return { label: label, value: value } as IPuzzle;
+    })
   }
 
   isPlayer(playerId: string) {
@@ -108,6 +123,9 @@ class Storage {
 
   newGame() {
     board = shuffle(board);
+    if (!this.puzzle?.length) {
+      this.setPuzzle('question --> answer');
+    }
     this.gameData = [];
     this.answered = [];
 
@@ -116,13 +134,13 @@ class Storage {
       scores[i].score = 0;
     }
 
-    for (let i = 0; i < puzzle.length; i++) {
+    for (let i = 0; i < this.puzzle.length; i++) {
       const pos = board[i].toPoint();
       this.gameData.push({
-        value: puzzle[i].label,
+        value: this.puzzle[i].label,
         x: pos.x,
         y: pos.y,
-        label: puzzle[i].value
+        label: this.puzzle[i].value
       });
     }
 

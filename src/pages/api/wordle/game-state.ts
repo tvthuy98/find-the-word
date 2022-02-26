@@ -1,5 +1,5 @@
 import { NextApiRequest } from "next";
-import WordleStorage from "src/lib/WordleStorage";
+import WordleStorage, { IGameItem } from "src/lib/WordleStorage";
 import { NextApiResponseServerIO } from "src/types/next";
 import Cookies from 'cookies';
 
@@ -18,16 +18,21 @@ export default (req: NextApiRequest, res: NextApiResponseServerIO) => {
 function handlePostState(req: NextApiRequest, res: NextApiResponseServerIO) {
   const cookies = new Cookies(req, res);
   const player_id = cookies.get('player_id');
+  const answer = req.body;
   if (player_id && !storage.isPlayer(player_id)) {
     storage.addPlayer(player_id, cookies.get('player_name'));
   }
 
+  const current = storage.currentQuestion as IGameItem;
+  if (answer.value !== current.value) {
+    return res.status(200).json({ incorrect: true });
+  }
+
   storage.answerCorrect(cookies.get('player_id'));
-  const current = storage.currentQuestion;
   const nextQuestion = storage.nextQuestion();
   const currsentUser = storage.getPlayer(cookies.get('player_id'));
 
-  if (currsentUser.score >= 15) {
+  if (currsentUser.score >= 15 || !nextQuestion) {
     return handleNewGame(req, res);
 
   } else {
@@ -45,11 +50,14 @@ function handlePostState(req: NextApiRequest, res: NextApiResponseServerIO) {
   res.status(201).json({ ok: 201 });
 }
 
-function handleGetState(req: NextApiRequest, res: NextApiResponseServerIO) {
+function handleGetState(_req: NextApiRequest, res: NextApiResponseServerIO) {
   res.status(200).json(storage.scoreBoard);
 }
 
 function handleNewGame(req: NextApiRequest, res: NextApiResponseServerIO) {
+  if (req.body.puzzle) {
+    storage.setPuzzle(req.body.puzzle);
+  }
   storage.newGame();
   res?.socket?.server?.io?.emit(
     "game:reset",
@@ -59,4 +67,6 @@ function handleNewGame(req: NextApiRequest, res: NextApiResponseServerIO) {
       scores: storage.scoreBoard,
     }
   );
+
+  res.status(201).json({ ok: 200 });
 }

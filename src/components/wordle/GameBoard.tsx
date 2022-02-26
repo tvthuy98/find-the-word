@@ -15,18 +15,19 @@ const GameBoard: React.FC<{
   question?: IGameItem;
   answered?: IGameItem[];
 }> = (props) => {
-  const submitAnswer = async () => {
+  const submitAnswer = async (answered: IGameItem) => {
     await fetch("/api/wordle/game-state", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
+      body: JSON.stringify(answered)
     });
   };
 
   const onPickItem = (item: IGameItem) => {
     if (item.value === props.question?.value) {
-      submitAnswer();
+      submitAnswer(item);
     }
   }
 
@@ -38,7 +39,7 @@ const GameBoard: React.FC<{
       <div tw="relative">
         {
           props.boardData?.map(item => {
-            return <div
+            return <button
               key={item.label}
               tw="absolute text-red-500 border"
               onClick={() => onPickItem(item)}
@@ -46,11 +47,11 @@ const GameBoard: React.FC<{
                 top: item.y,
                 left: item.x,
                 fontSize: 30,
-                width: 40,
-                height: 40,
+                // width: 40,
+                // height: 40,
               }}>
               {item.label}
-            </div>
+            </button>
           })
         }
       </div>

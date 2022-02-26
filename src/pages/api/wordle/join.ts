@@ -17,6 +17,8 @@ function handleJoinTheGame(req: NextApiRequest, res: NextApiResponseServerIO) {
     storage.newGame();
   }
 
+  console.log('[x] storage', storage.scoreBoard);
+
   if (playerId && !storage.isPlayer(playerId)) {
     storage.addPlayer(playerId, playerName);
   }

@@ -1,6 +1,6 @@
 
 import { NextPageContext } from "next";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, FormEvent } from "react";
 import SocketIOClient from "socket.io-client";
 import tw from "twin.macro";
 import Cookies from 'cookies';
@@ -8,7 +8,6 @@ import getLocalIp from "src/lib/getIpAddress";
 import GameBoard from "src/components/wordle/GameBoard";
 import { Socket } from "socket.io-client";
 import { IGameItem } from "src/lib/WordleStorage";
-import players from "./api/wordle/players";
 
 export interface IPlayer {
   playerId: string;
@@ -33,7 +32,6 @@ const Wordle: React.FC<{
   answered: IGameItem[];
   current: IGameItem;
 }> = (props) => {
-  const inputRef = useRef(null);
   const socketRef = useRef<typeof Socket>();
 
   // connected flag
@@ -45,6 +43,7 @@ const Wordle: React.FC<{
   const [question, setQuestion] = useState<IGameItem>(props.current);
   const [gameBoard, setGameBoard] = useState<IGameItem[]>(props.gameBoard);
   const [answered, setAnswered] = useState<IGameItem[]>(props.answered);
+  const [prevAnswer, setPrevAnswer] = useState<IGameItem>();
 
   useEffect((): any => {
     // connect to socket server
@@ -64,7 +63,10 @@ const Wordle: React.FC<{
         scrs[message.player.playerId] = message.player;
         return { ...scrs };
       });
-      setQuestion(message.next);
+      setQuestion(current => {
+        setPrevAnswer(current);
+        return message.next;
+      });
       setAnswered(curr => ([...curr, message.current]));
     });
 
@@ -94,6 +96,23 @@ const Wordle: React.FC<{
     setScoreBoard(newScoreBoard);
   }, [scores, props.scoreBoard]);
 
+
+  const handleSubmitPuzzle = useCallback((event: FormEvent) => {
+    event.preventDefault(); 
+    const formData = new FormData(event.target as HTMLFormElement);
+    const formProps = Object.fromEntries(formData);
+    console.log('[x] formProps', formProps);
+    fetch("/api/wordle/game-state", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formProps),
+    }).then(res => {
+      console.log('[x] res', res.text());
+    });
+  }, []);
+
   return (<><div tw="flex w-full">
     <div tw="flex w-1/2 max-w-xs flex-col h-screen">
       <div tw="flex flex-col flex-1 bg-gray-200">
@@ -116,6 +135,22 @@ const Wordle: React.FC<{
             ))
           }
         </div>
+      </div>
+      <div tw="bg-blue-200 p-1">
+        <form onSubmit={handleSubmitPuzzle}>
+          <div tw="mb-4">
+            <label tw="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
+              New Puzzle
+            </label>
+            <textarea placeholder="question 1 --> answer 1" rows={12} tw="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none resize-none" name="puzzle"></textarea>
+          </div>
+          <div tw="flex items-center justify-center content-center">
+            <input tw="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none" type="submit" value="Set Puzzle" />
+          </div>
+        </form>
+      </div>
+      <div tw="text-2xl">
+        [PV]: {prevAnswer?.label} ({prevAnswer?.value})
       </div>
     </div>
     <GameBoard
@@ -150,7 +185,6 @@ export async function getServerSideProps(context: NextPageContext) {
       name: cookies.get('player_name')
     }),
   }).then(r => r.json());
-  console.log('[x] score board', board);
 
   return {
     props: {

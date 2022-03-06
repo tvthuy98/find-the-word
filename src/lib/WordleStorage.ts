@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import { defineGrid, extendHex, GridFactory, Hex } from 'honeycomb-grid'
+import { defineGrid, extendHex } from 'honeycomb-grid'
+import { DEFAULT_PUZZLE } from './constants';
 
 const Grid = defineGrid(extendHex({
   size: 40,
@@ -91,6 +92,10 @@ class Storage {
     };
   }
 
+  removePlayer(playerId: string) {
+    delete this.scoreBoard[playerId];
+  }
+
   updatePlayerName(playerId: string, newName: string): void {
     if (!this.scoreBoard[playerId]) {
       throw new Error(`player ${playerId} does not exits`);
@@ -119,11 +124,11 @@ class Storage {
 
   newGame() {
     if (!this.puzzle?.length) {
-      this.setPuzzle('question --> answer');
+      this.setPuzzle(DEFAULT_PUZZLE);
     }
     this.gameData = [];
     this.answered = [];
-    this.puzzle = shuffle(this.puzzle);
+    this.board = shuffle(this.board);
 
     const scores = Object.values(this.scoreBoard);
     for (let i = 0, len = scores.length; i < len; i++) {

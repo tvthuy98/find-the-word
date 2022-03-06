@@ -17,8 +17,6 @@ function handleJoinTheGame(req: NextApiRequest, res: NextApiResponseServerIO) {
     storage.newGame();
   }
 
-  console.log('[x] storage', storage.scoreBoard);
-
   if (playerId && !storage.isPlayer(playerId)) {
     storage.addPlayer(playerId, playerName);
   }
@@ -29,10 +27,12 @@ function handleJoinTheGame(req: NextApiRequest, res: NextApiResponseServerIO) {
     storage.getPlayer(playerId)
   );
 
-  res.status(200).json({
+  const gameState = {
     score: storage.scoreBoard,
     data: storage.gameData,
     answered: storage.answered,
     current: storage.currentQuestion,
-  });
+  };
+
+  res.status(200).json(gameState);
 }

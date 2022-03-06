@@ -8,6 +8,7 @@ import getLocalIp from "src/lib/getIpAddress";
 import GameBoard from "src/components/wordle/GameBoard";
 import { Socket } from "socket.io-client";
 import { IGameItem } from "src/lib/WordleStorage";
+import { BOARD_BG_COLORS, DEFAULT_PUZZLE } from "src/lib/constants";
 
 export interface IPlayer {
   playerId: string;
@@ -43,7 +44,9 @@ const Wordle: React.FC<{
   const [question, setQuestion] = useState<IGameItem>(props.current);
   const [gameBoard, setGameBoard] = useState<IGameItem[]>(props.gameBoard);
   const [answered, setAnswered] = useState<IGameItem[]>(props.answered);
-  const [prevAnswer, setPrevAnswer] = useState<IGameItem>();
+  const [previous, setPrevAnswer] = useState<IGameItem>({ x: 0, y: 0, label: '', value: ''});
+
+  const boardElRef = React.useRef<HTMLDivElement>(null);
 
   useEffect((): any => {
     // connect to socket server
@@ -72,8 +75,17 @@ const Wordle: React.FC<{
 
     socket.on("player:joined", (message: IScore) => {
       setScores(scrs => {
-        scrs[message.playerId] = message;
-        return { ...scrs };
+        let copied = {...scrs};
+        copied[message.playerId] = message;
+        return copied;
+      });
+    });
+
+    socket.on("player:left", (message: { playerId: string }) => {
+      setScores(scrs => {
+        let copied = {...scrs};
+        delete copied[message.playerId];
+        return copied;
       });
     });
 
@@ -96,12 +108,18 @@ const Wordle: React.FC<{
     setScoreBoard(newScoreBoard);
   }, [scores, props.scoreBoard]);
 
+  useEffect(() => {
+    if (boardElRef.current) {
+      const currentColor = boardElRef.current.style.backgroundColor;
+      const nextColor = BOARD_BG_COLORS.indexOf(currentColor) + 1;
+      boardElRef.current.style.backgroundColor = BOARD_BG_COLORS[nextColor] || BOARD_BG_COLORS[0];
+    }
+  }, [question]);
 
   const handleSubmitPuzzle = useCallback((event: FormEvent) => {
     event.preventDefault(); 
     const formData = new FormData(event.target as HTMLFormElement);
     const formProps = Object.fromEntries(formData);
-    console.log('[x] formProps', formProps);
     fetch("/api/wordle/game-state", {
       method: "PUT",
       headers: {
@@ -113,7 +131,7 @@ const Wordle: React.FC<{
     });
   }, []);
 
-  return (<><div tw="flex w-full">
+  return (<><div className="board" tw="flex w-full" ref={boardElRef}>
     <div tw="flex w-1/2 max-w-xs flex-col h-screen">
       <div tw="flex flex-col flex-1 bg-gray-200">
         <div tw="flex-1 p-4 font-mono">
@@ -128,7 +146,7 @@ const Wordle: React.FC<{
                 <span
                   css={plrScore.playerId === props.playerId ? tw`text-red-500` : tw`text-black`}
                 >
-                  {plrScore.playerId === props.playerId ? "You" : plrScore.name}
+                  {plrScore.playerId === props.playerId ? `${plrScore.name} (You)` : plrScore.name}
                 </span>
                 : {plrScore.score}
               </div>
@@ -142,21 +160,25 @@ const Wordle: React.FC<{
             <label tw="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
               New Puzzle
             </label>
-            <textarea placeholder="question 1 --> answer 1" rows={12} tw="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none resize-none" name="puzzle"></textarea>
+            <textarea
+              rows={12}
+              tw="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none resize-none"
+              name="puzzle"
+              defaultValue={DEFAULT_PUZZLE}>
+            </textarea>
           </div>
           <div tw="flex items-center justify-center content-center">
             <input tw="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none" type="submit" value="Set Puzzle" />
           </div>
         </form>
       </div>
-      <div tw="text-2xl">
-        [PV]: {prevAnswer?.label} ({prevAnswer?.value})
-      </div>
+      <div tw="text-white p-0">{connected ? 'connected': 'connecting...'}</div>
     </div>
     <GameBoard
       boardData={gameBoard}
       answered={answered}
       question={question}
+      previous={previous}
     />
   </div></>);
 };

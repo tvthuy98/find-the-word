@@ -14,6 +14,7 @@ const GameBoard: React.FC<{
   boardData?: IGameItem[];
   question?: IGameItem;
   answered?: IGameItem[];
+  previous?: IGameItem;
 }> = (props) => {
   const submitAnswer = async (answered: IGameItem) => {
     await fetch("/api/wordle/game-state", {
@@ -32,8 +33,8 @@ const GameBoard: React.FC<{
   }
 
   return (
-    <div tw="w-full">
-      <div tw="h-8 text-3xl mb-5 w-full bg-green-300 w-full text-center">
+    <div tw="w-full pl-1 pr-1">
+      <div tw="text-3xl mb-5 w-full text-white border-b-2 w-full text-center p-2">
         {props.question?.value}
       </div>
       <div tw="relative">
@@ -41,14 +42,13 @@ const GameBoard: React.FC<{
           props.boardData?.map(item => {
             return <button
               key={item.label}
-              tw="absolute text-red-500 border"
+              tw="absolute border rounded text-white"
               onClick={() => onPickItem(item)}
               style={{
                 top: item.y,
                 left: item.x,
-                fontSize: 30,
-                // width: 40,
-                // height: 40,
+                fontSize: 25,
+                backgroundColor: props.previous?.value === item.value ? 'lime' : 'unset',
               }}>
               {item.label}
             </button>

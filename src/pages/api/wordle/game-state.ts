@@ -28,11 +28,13 @@ function handlePostState(req: NextApiRequest, res: NextApiResponseServerIO) {
     return res.status(200).json({ incorrect: true });
   }
 
-  storage.answerCorrect(cookies.get('player_id'));
+  if (!answer.suggested) {
+    storage.answerCorrect(cookies.get('player_id'));
+  }
   const nextQuestion = storage.nextQuestion();
   const currsentUser = storage.getPlayer(cookies.get('player_id'));
 
-  if (currsentUser.score >= 15 || !nextQuestion) {
+  if (currsentUser.score >= 20 || !nextQuestion) {
     return handleNewGame(req, res);
 
   } else {

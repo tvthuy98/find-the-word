@@ -1,6 +1,8 @@
 
 import React  from "react";
 import "twin.macro";
+import { styled } from "twin.macro";
+import cls from 'classnames';
 
 export interface IGameItem {
   value: string;
@@ -15,14 +17,29 @@ const GameBoard: React.FC<{
   question?: IGameItem;
   answered?: IGameItem[];
   previous?: IGameItem;
+  className?: string;
 }> = (props) => {
+  const [shouldSuggest, setShouldSuggest] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    setShouldSuggest(false);
+
+    let suggestTimer = setTimeout(() => {
+      setShouldSuggest(true);
+    }, 15000);
+
+    return () => {
+      clearTimeout(suggestTimer);
+    }
+  }, [props.question]);
+
   const submitAnswer = async (answered: IGameItem) => {
     await fetch("/api/wordle/game-state", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(answered)
+      body: JSON.stringify({ ...answered, suggested: shouldSuggest })
     });
   };
 
@@ -33,7 +50,7 @@ const GameBoard: React.FC<{
   }
 
   return (
-    <div tw="w-full pl-1 pr-1">
+    <div className={cls(props.className)} tw="w-full pl-1 pr-1">
       <div tw="text-3xl mb-5 w-full text-white border-b-2 w-full text-center p-2">
         {props.question?.value}
       </div>
@@ -42,13 +59,16 @@ const GameBoard: React.FC<{
           props.boardData?.map(item => {
             return <button
               key={item.label}
-              tw="absolute border rounded text-white"
+              tw="absolute border rounded text-white font-bold"
               onClick={() => onPickItem(item)}
+              className={cls({
+                  'blinking': item.value === props.question.value && shouldSuggest,
+                })}
               style={{
                 top: item.y,
                 left: item.x,
                 fontSize: 25,
-                backgroundColor: props.previous?.value === item.value ? 'lime' : 'unset',
+                backgroundColor: props.previous?.value === item.value ? '#680065' : 'unset',
               }}>
               {item.label}
             </button>
@@ -59,4 +79,14 @@ const GameBoard: React.FC<{
   )
 };
 
-export default GameBoard;
+export default styled(GameBoard)`
+  .blinking {
+    animation: blinker 0.5s linear infinite;
+  }
+
+  @keyframes blinker {
+    50% {
+      opacity: 0.25;
+    }
+  }
+`;

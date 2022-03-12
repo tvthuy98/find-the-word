@@ -1,4 +1,3 @@
-
 import { NextPageContext } from "next";
 import React, { useState, useEffect, useRef, useCallback, FormEvent } from "react";
 import SocketIOClient from "socket.io-client";
@@ -45,6 +44,7 @@ const Wordle: React.FC<{
   const [gameBoard, setGameBoard] = useState<IGameItem[]>(props.gameBoard);
   const [answered, setAnswered] = useState<IGameItem[]>(props.answered);
   const [previous, setPrevAnswer] = useState<IGameItem>({ x: 0, y: 0, label: '', value: ''});
+  const [boardBackground, setBoardBackground] = useState<string>(BOARD_BG_COLORS[0]);
 
   const boardElRef = React.useRef<HTMLDivElement>(null);
 
@@ -109,11 +109,10 @@ const Wordle: React.FC<{
   }, [scores, props.scoreBoard]);
 
   useEffect(() => {
-    if (boardElRef.current) {
-      const currentColor = boardElRef.current.style.backgroundColor;
-      const nextColor = BOARD_BG_COLORS.indexOf(currentColor) + 1;
-      boardElRef.current.style.backgroundColor = BOARD_BG_COLORS[nextColor] || BOARD_BG_COLORS[0];
-    }
+    setBoardBackground((current: string) => {
+      const nextIndex = BOARD_BG_COLORS.indexOf(current) + 1;
+      return (BOARD_BG_COLORS[nextIndex] || BOARD_BG_COLORS[0]);
+    });
   }, [question]);
 
   const handleSubmitPuzzle = useCallback((event: FormEvent) => {
@@ -131,56 +130,64 @@ const Wordle: React.FC<{
     });
   }, []);
 
-  return (<><div className="board" tw="flex w-full" ref={boardElRef}>
-    <div tw="flex w-1/2 max-w-xs flex-col h-screen">
-      <div tw="flex flex-col flex-1 bg-gray-200">
-        <div tw="flex-1 p-4 font-mono">
-          {
-            scoreBoard.map((plrScore, i) => (
-              <div key={"msg_" + i} tw="mt-1">
-                <span
-                  css={i < 3 ? tw`text-green-500` : tw`text-black`}
-                >
-                  [{i + 1}]
-                </span>
-                <span
-                  css={plrScore.playerId === props.playerId ? tw`text-red-500` : tw`text-black`}
-                >
-                  {plrScore.playerId === props.playerId ? `${plrScore.name} (You)` : plrScore.name}
-                </span>
-                : {plrScore.score}
-              </div>
-            ))
-          }
+  return (<>
+    <div className="board" tw="flex w-full" ref={boardElRef}>
+      <div tw="flex w-1/2 max-w-xs flex-col h-screen">
+        <div tw="flex flex-col flex-1 bg-gray-200">
+          <div tw="flex-1 p-4 font-mono">
+            {
+              scoreBoard.map((plrScore, i) => (
+                <div key={"msg_" + i} tw="mt-1">
+                  <span
+                    css={i < 3 ? tw`text-green-500` : tw`text-black`}
+                  >
+                    [{i + 1}]
+                  </span>
+                  <span
+                    css={plrScore.playerId === props.playerId ? tw`text-red-500` : tw`text-black`}
+                  >
+                    {plrScore.playerId === props.playerId ? `${plrScore.name} (You)` : plrScore.name}
+                  </span>
+                  : {plrScore.score}
+                </div>
+              ))
+            }
+          </div>
         </div>
+        <div tw="bg-blue-200 p-1">
+          <form onSubmit={handleSubmitPuzzle}>
+            <div tw="mb-4">
+              <label tw="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
+                New Puzzle
+              </label>
+              <textarea
+                rows={12}
+                tw="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none resize-none"
+                name="puzzle"
+                defaultValue={DEFAULT_PUZZLE}>
+              </textarea>
+            </div>
+            <div tw="flex items-center justify-center content-center">
+              <input tw="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none" type="submit" value="Set Puzzle" />
+            </div>
+          </form>
+        </div>
+        <div tw="text-white p-0">{connected ? 'connected': 'connecting...'}</div>
       </div>
-      <div tw="bg-blue-200 p-1">
-        <form onSubmit={handleSubmitPuzzle}>
-          <div tw="mb-4">
-            <label tw="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
-              New Puzzle
-            </label>
-            <textarea
-              rows={12}
-              tw="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none resize-none"
-              name="puzzle"
-              defaultValue={DEFAULT_PUZZLE}>
-            </textarea>
-          </div>
-          <div tw="flex items-center justify-center content-center">
-            <input tw="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none" type="submit" value="Set Puzzle" />
-          </div>
-        </form>
-      </div>
-      <div tw="text-white p-0">{connected ? 'connected': 'connecting...'}</div>
+      <GameBoard
+        boardData={gameBoard}
+        answered={answered}
+        question={question}
+        previous={previous}
+      />
     </div>
-    <GameBoard
-      boardData={gameBoard}
-      answered={answered}
-      question={question}
-      previous={previous}
-    />
-  </div></>);
+
+    <style jsx global={true}>{`
+      body {
+        background-color: ${boardBackground}
+      }
+    `}</style>
+  </>);
 };
 
 export async function getServerSideProps(context: NextPageContext) {

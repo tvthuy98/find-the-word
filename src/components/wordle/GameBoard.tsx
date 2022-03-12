@@ -1,4 +1,3 @@
-
 import React  from "react";
 import "twin.macro";
 import { styled } from "twin.macro";
@@ -19,14 +18,14 @@ const GameBoard: React.FC<{
   previous?: IGameItem;
   className?: string;
 }> = (props) => {
-  const [shouldSuggest, setShouldSuggest] = React.useState<boolean>(false);
+  const [suggesting, setSuggesting] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    setShouldSuggest(false);
+    setSuggesting(false);
 
     let suggestTimer = setTimeout(() => {
-      setShouldSuggest(true);
-    }, 15000);
+      setSuggesting(true);
+    }, 35000);
 
     return () => {
       clearTimeout(suggestTimer);
@@ -39,7 +38,7 @@ const GameBoard: React.FC<{
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ...answered, suggested: shouldSuggest })
+      body: JSON.stringify({ ...answered, suggested: suggesting })
     });
   };
 
@@ -49,8 +48,11 @@ const GameBoard: React.FC<{
     }
   }
 
-  return (
+  return (<>
     <div className={cls(props.className)} tw="w-full pl-1 pr-1">
+      <style>
+
+      </style>
       <div tw="text-3xl mb-5 w-full text-white border-b-2 w-full text-center p-2">
         {props.question?.value}
       </div>
@@ -62,7 +64,7 @@ const GameBoard: React.FC<{
               tw="absolute border rounded text-white font-bold"
               onClick={() => onPickItem(item)}
               className={cls({
-                  'blinking': item.value === props.question.value && shouldSuggest,
+                  'blinking': item.value === props.question.value && suggesting,
                 })}
               style={{
                 top: item.y,
@@ -76,7 +78,7 @@ const GameBoard: React.FC<{
         }
       </div>
     </div>
-  )
+  </>)
 };
 
 export default styled(GameBoard)`

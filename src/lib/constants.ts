@@ -1,8 +1,8 @@
 export const BOARD_BG_COLORS = [
   'rgb(78, 36, 100)',
-  'rgb(36, 100, 53)',
   'rgb(100, 57, 36)',
   'rgb(125, 28, 126)',
+  'rgb(195, 89, 89)',
 ];
 
 export const DEFAULT_PUZZLE = `あ-->a [a] hiragana
